@@ -1,5 +1,6 @@
 
 #include "RenderUtil.h"
+#include "ModelObj.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -48,7 +49,23 @@ void main()
 
 void InitScene()
 {
-    RenderUtil::drawLine(13, 20, 80, 40, GImage, g_white);
+    //RenderUtil::drawLine(13, 20, 80, 40, GImage, g_white);
+
+    const int width = SCR_WIDTH;
+    const int height = SCR_HEIGHT;
+    Model* model = new Model("../../res/AfricanHead/african_head.obj");
+    for (int i = 0; i < model->nfaces(); i++) {
+        std::vector<int> face = model->face(i);
+        for (int j = 0; j < 3; j++) {
+            Vector3f v0 = model->vert(face[j]);
+            Vector3f v1 = model->vert(face[(j + 1) % 3]);
+            int x0 = (v0.x + 1.) * width / 2.;
+            int y0 = (v0.y + 1.) * height / 2.;
+            int x1 = (v1.x + 1.) * width / 2.;
+            int y1 = (v1.y + 1.) * height / 2.;
+            RenderUtil::drawLine(x0, y0, x1, y1, GImage, g_white);
+        }
+    }
 }
 
 int main()
@@ -97,9 +114,7 @@ int main()
     // set texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
-    int width, height, nrChannels;
-    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+
     unsigned char* data = GImage.buffer();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
