@@ -98,6 +98,11 @@ template <typename T> Vector<3, T> cross(Vector<3, T> v1, Vector<3, T> v2) {
 	return Vector<3, T>(v1.y * v2.z - v1.z * v2.y, v1.z * v2.x - v1.x * v2.z, v1.x * v2.y - v1.y * v2.x);
 }
 
+// Cross product operator for Vector<3, T>
+template <typename T> Vector<3, T> operator^(Vector<3, T> lhs, Vector<3, T> rhs) {
+	return cross(lhs, rhs);
+}
+
 template <size_t SIZE, typename T> std::ostream& operator<<(std::ostream& out, Vector<SIZE, T>& v) {
 	for (unsigned int i = 0; i < SIZE; i++) {
 		out << v[i] << " ";

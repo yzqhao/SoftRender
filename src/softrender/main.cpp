@@ -47,7 +47,7 @@ void main()
 }
 )";
 
-void InitScene()
+void InitDrawLine()
 {
     //RenderUtil::drawLine(13, 20, 80, 40, GImage, g_white);
 
@@ -64,6 +64,33 @@ void InitScene()
             int x1 = (v1.x + 1.) * width / 2.;
             int y1 = (v1.y + 1.) * height / 2.;
             RenderUtil::drawLine(x0, y0, x1, y1, GImage, g_white);
+        }
+    }
+}
+
+void InitDrawTriangle()
+{
+    //Vector2i pts[3] = { Vector2i(10,10), Vector2i(100, 30), Vector2i(190, 160) };
+    //RenderUtil::drawTriangle(pts, GImage, BColor(255, 0, 0));
+
+    Vector3f light_dir(0,0,-1);
+    const int width = SCR_WIDTH;
+    const int height = SCR_HEIGHT;
+    Model* model = new Model("../../res/AfricanHead/african_head.obj");
+    for (int i = 0; i < model->nfaces(); i++) {
+        std::vector<int> face = model->face(i);
+        Vector2i screen_coords[3];
+        Vector3f world_coords[3];
+        for (int j = 0; j < 3; j++) {
+            Vector3f v = model->vert(face[j]);
+            screen_coords[j] = Vector2i((v.x + 1.) * width / 2., (v.y + 1.) * height / 2.);
+            world_coords[j] = v;
+        }
+        Vector3f n = (world_coords[2] - world_coords[0]) ^ (world_coords[1] - world_coords[0]);
+        n.normalize();
+        float intensity = n * light_dir;
+        if (intensity > 0) {
+            RenderUtil::drawTriangle(screen_coords, GImage, BColor(intensity * 255, intensity * 255, intensity * 255, 255));
         }
     }
 }
@@ -103,7 +130,7 @@ int main()
 
     // clear and update image buffer each frame
     GImage.clear();
-    InitScene();
+    InitDrawTriangle();
 
     // load and create a texture
     // -------------------------
