@@ -101,9 +101,11 @@ int main()
         return -1;
     }
 
+    // clear and update image buffer each frame
+    GImage.clear();
     InitScene();
 
-    // load and create a texture 
+    // load and create a texture
     // -------------------------
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -115,8 +117,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    unsigned char* data = GImage.buffer();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, GImage.buffer());
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // build and compile our shader program
@@ -207,6 +208,10 @@ int main()
         // input
         // -----
         processInput(window);
+
+        // update texture data
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, GImage.buffer());
 
         // render
         // ------
