@@ -15,8 +15,9 @@ const BColor g_red = BColor(255, 0, 0, 255);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_HEIGHT = 800;
 Image GImage(SCR_WIDTH, SCR_HEIGHT, Image::RGB);
+DepthBuffer GDepthBuffer(SCR_WIDTH, SCR_HEIGHT);
 
 const char* vertexShaderSource = R"(
 #version 330 core
@@ -73,26 +74,9 @@ void InitDrawTriangle()
     //Vector2i pts[3] = { Vector2i(10,10), Vector2i(100, 30), Vector2i(190, 160) };
     //RenderUtil::drawTriangle(pts, GImage, BColor(255, 0, 0));
 
-    Vector3f light_dir(0,0,-1);
-    const int width = SCR_WIDTH;
-    const int height = SCR_HEIGHT;
     Model* model = new Model("../../res/AfricanHead/african_head.obj");
-    for (int i = 0; i < model->nfaces(); i++) {
-        std::vector<int> face = model->face(i);
-        Vector2i screen_coords[3];
-        Vector3f world_coords[3];
-        for (int j = 0; j < 3; j++) {
-            Vector3f v = model->vert(face[j]);
-            screen_coords[j] = Vector2i((v.x + 1.) * width / 2., (v.y + 1.) * height / 2.);
-            world_coords[j] = v;
-        }
-        Vector3f n = (world_coords[2] - world_coords[0]) ^ (world_coords[1] - world_coords[0]);
-        n.normalize();
-        float intensity = n * light_dir;
-        if (intensity > 0) {
-            RenderUtil::drawTriangle(screen_coords, GImage, BColor(intensity * 255, intensity * 255, intensity * 255, 255));
-        }
-    }
+    RenderData rd = {model, &GImage, &GDepthBuffer};
+    RenderUtil::draw(rd, BColor(rand()%255, rand()%255, rand()%255, 255));
 }
 
 int main()

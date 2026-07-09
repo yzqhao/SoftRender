@@ -23,7 +23,7 @@ namespace RenderUtil {
         }
     }
 
-    static Vector3f barycentric(Vector2f A, Vector2f B, Vector2f C, Vector2f P) {
+    static Vector3f barycentric(Vector3f A, Vector3f B, Vector3f C, Vector3f P) {
         Vector3f s[2];
         for (int i = 2; i--; ) {
             s[i][0] = C[i] - A[i];
@@ -36,24 +36,47 @@ namespace RenderUtil {
         return Vector3f(-1, 1, 1); // in this case generate negative coordinates, it will be thrown away by the rasterizator
     }
  
-    void drawTriangle(Vector2i* pts, Image &image, BColor color) { 
-        Vector2i bboxmin(image.get_width()-1,  image.get_height()-1); 
-        Vector2i bboxmax(0, 0); 
-        Vector2i clamp(image.get_width()-1, image.get_height()-1); 
-        for (int i=0; i<3; i++) { 
-            bboxmin.x = std::max(0, std::min(bboxmin.x, pts[i].x));
-	    bboxmin.y = std::max(0, std::min(bboxmin.y, pts[i].y));
+    static void drawTriangle(Vector3f* pts, RenderData& rd, BColor color) {
+        Image* pimg = rd.mImage;
+        Vector2f bboxmin( std::numeric_limits<float>::max(),  std::numeric_limits<float>::max());
+        Vector2f bboxmax(-std::numeric_limits<float>::max(),  -std::numeric_limits<float>::max());
+        Vector2f clamp(pimg->get_width()-1, pimg->get_height()-1);
+        for (int i=0; i<3; i++) {
+            bboxmin.x = std::max(0.0f, std::min(bboxmin.x, pts[i].x));
+            bboxmin.y = std::max(0.0f, std::min(bboxmin.y, pts[i].y));
 
-	    bboxmax.x = std::min(clamp.x, std::max(bboxmax.x, pts[i].x));
-	    bboxmax.y = std::min(clamp.y, std::max(bboxmax.y, pts[i].y));
-        } 
-        Vector2i P; 
-        for (P.x=bboxmin.x; P.x<=bboxmax.x; P.x++) { 
-            for (P.y=bboxmin.y; P.y<=bboxmax.y; P.y++) { 
+            bboxmax.x = std::min(clamp.x, std::max(bboxmax.x, pts[i].x));
+            bboxmax.y = std::min(clamp.y, std::max(bboxmax.y, pts[i].y));
+        }
+        Vector3f P;
+        for (P.x=bboxmin.x; P.x<=bboxmax.x; P.x++) {
+            for (P.y=bboxmin.y; P.y<=bboxmax.y; P.y++) {
                 Vector3f bc_screen  = barycentric(pts[0], pts[1], pts[2], P);
-                if (bc_screen.x<0 || bc_screen.y<0 || bc_screen.z<0) continue; 
-                image.set(P.x, P.y, color); 
-            } 
-        } 
-    } 
+                if (bc_screen.x<0 || bc_screen.y<0 || bc_screen.z<0) continue;
+                P.z = 0;
+                for (int i = 0; i < 3; i++) P.z += pts[i][2] * bc_screen[i];
+                if (rd.mDepthBuffer->depthTestAndWrite(P.x, P.y, P.z)) {
+                    pimg->set(P.x, P.y, color);
+                }
+            }
+        }
+    }
+
+    static Vector3f world2screen(Vector3f v, int width, int height) {
+        return Vector3f(int((v.x+1.)*width/2.+.5), int((v.y+1.)*height/2.+.5), v.z);
+    }
+
+    void draw(RenderData& rd, BColor color) {
+        auto model = rd.mModel;
+        const int width = rd.mImage->get_width();
+        const int height = rd.mImage->get_height();
+        const Vector3f light_dir(0,0,-1);
+        for (int i = 0; i < model->nfaces(); i++) {
+            std::vector<int> face = model->face(i);
+            Vector3f pts[3];
+            for (int i = 0; i < 3; i++) pts[i] = world2screen(model->vert(face[i]), width, height);
+            int col = rand() % 255;
+            drawTriangle(pts, rd, BColor(col, col, col, 255));
+        }
+    }
 }
